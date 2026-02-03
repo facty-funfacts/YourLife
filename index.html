@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fake Social Life Simulator</title>
+<style>
+  body { margin:0; font-family: 'Segoe UI', sans-serif; background:#111; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; overflow:hidden; }
+  #game { position:relative; width:500px; height:600px; border:3px solid #0ff; padding:20px; box-sizing:border-box; background:#222; overflow:hidden; }
+  .meter { height:20px; width:100%; background:#333; margin:5px 0; border-radius:10px; overflow:hidden; }
+  .fill { height:100%; width:50%; background:#0ff; border-radius:10px; transition:width 0.3s; }
+  #event { margin:10px 0; font-size:18px; min-height:60px; }
+  .choices button { margin:5px; padding:10px 15px; background:#0ff; border:none; border-radius:5px; color:#111; font-weight:bold; cursor:pointer; }
+  .choices button:hover { background:#0aa; }
+  #message { position:absolute; top:0; left:0; right:0; text-align:center; font-size:24px; padding:10px; display:none; background:#f00; color:#fff; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="meter">Clout: <div id="cloutFill" class="fill"></div></div>
+  <div class="meter">Sanity: <div id="sanityFill" class="fill"></div></div>
+  <div class="meter">Drama: <div id="dramaFill" class="fill"></div></div>
+  <div id="event">Welcome to Fake Social Life! Survive the chaos!</div>
+  <div class="choices"></div>
+  <div id="message"></div>
+</div>
+
+<script>
+// ====== GAME STATE ======
+let clout = 50, sanity = 50, drama = 0;
+let day = 1;
+let gameOver = false;
+
+// ====== EVENT POOL ======
+const events = [
+  { text: "Your crush DMed you a meme", choices:[
+      {text:"Reply honestly", effect:[+10,+5,0]},
+      {text:"Send a meme back", effect:[+15,-5,+5]},
+      {text:"Ignore", effect:[0,-5,+10]}
+  ]},
+  { text: "A troll commented on your post", choices:[
+      {text:"Argue back", effect:[-5,-5,+10]},
+      {text:"Block them", effect:[0,0,-5]},
+      {text:"Make a meme about it", effect:[+10,-10,+5]}
+  ]},
+  { text: "Teacher sees your prank", choices:[
+      {text:"Apologize", effect:[-5,+5,0]},
+      {text:"Laugh it off", effect:[+5,-5,+5]},
+      {text:"Blame someone else", effect:[-10,-5,+15]}
+  ]},
+  { text: "Viral meme trend appears", choices:[
+      {text:"Join trend", effect:[+10,0,+5]},
+      {text:"Ignore", effect:[0,0,-5]},
+      {text:"Make your own meme", effect:[+15,-5,+10]}
+  ]},
+  { text: "Your embarrassing story leaked", choices:[
+      {text:"Panic", effect:[-5,-15,+10]},
+      {text:"Make a joke", effect:[+5,-5,+5]},
+      {text:"Pretend nothing happened", effect:[0,-5,+5]}
+  ]},
+  { text: "Friend challenges you to a crazy dare", choices:[
+      {text:"Do it", effect:[+10,-10,+15]},
+      {text:"Refuse politely", effect:[0,+5,-5]},
+      {text:"Prank them instead", effect:[+5,-5,+10]}
+  ]},
+  { text: "Parents check your phone", choices:[
+      {text:"Hide it", effect:[0,-5,+5]},
+      {text:"Confess", effect:[-5,+5,0]},
+      {text:"Pretend nothing happened", effect:[0,0,0]}
+  ]}
+];
+
+// ====== UTILS ======
+function updateMeters(){
+  document.getElementById("cloutFill").style.width = clout + "%";
+  document.getElementById("sanityFill").style.width = sanity + "%";
+  document.getElementById("dramaFill").style.width = drama + "%";
+}
+
+function showMessage(text, time=1000){
+  const msg = document.getElementById("message");
+  msg.innerText = text;
+  msg.style.display = "block";
+  setTimeout(()=>{msg.style.display="none";}, time);
+}
+
+// ====== GAME LOOP ======
+function nextEvent(){
+  if(gameOver) return;
+
+  // Random event
+  const event = events[Math.floor(Math.random()*events.length)];
+  const eventDiv = document.getElementById("event");
+  const choicesDiv = document.querySelector(".choices");
+  eventDiv.innerText = event.text;
+  choicesDiv.innerHTML = "";
+
+  // Create choice buttons
+  event.choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.innerText = choice.text;
+    btn.onclick = ()=>{
+      // Apply effects
+      clout += choice.effect[0];
+      sanity += choice.effect[1];
+      drama += choice.effect[2];
+
+      // Clamp stats
+      clout = Math.min(Math.max(clout,0),100);
+      sanity = Math.min(Math.max(sanity,0),100);
+      drama = Math.min(Math.max(drama,0),100);
+
+      updateMeters();
+      checkGameOver();
+
+      // Add some chaos visual if drama high
+      if(drama>70) document.getElementById("game").style.background="#440044";
+      else document.getElementById("game").style.background="#222";
+
+      // Random mini-challenge (20% chance)
+      if(Math.random()<0.2 && !gameOver) miniChallenge();
+
+      // Next event
+      if(!gameOver) setTimeout(nextEvent, 800);
+    };
+    choicesDiv.appendChild(btn);
+  });
+}
+
+// ====== MINI CHALLENGE ======
+function miniChallenge(){
+  showMessage("Quick! Click fast!", 1500);
+  let clicks = 0;
+  const target = 5 + Math.floor(Math.random()*5);
+  function clickHandler(){
+    clicks++;
+    if(clicks>=target){
+      showMessage("Success!", 1000);
+      clout+=10; sanity+=5;
+      document.removeEventListener("click", clickHandler);
+      updateMeters();
+    }
+  }
+  document.addEventListener("click", clickHandler);
+  setTimeout(()=>{
+    document.removeEventListener("click", clickHandler);
+    if(clicks<target){
+      showMessage("Fail!", 1000);
+      sanity-=10; drama+=5;
+      updateMeters();
+      checkGameOver();
+    }
+  },1500);
+}
+
+// ====== GAME OVER ======
+function checkGameOver(){
+  if(clout<=0 || sanity<=0 || drama>=100){
+    gameOver=true;
+    document.getElementById("event").innerText="💀 GAME OVER 💀\nDay survived: "+day;
+    document.querySelector(".choices").innerHTML='<button onclick="restart()">Restart</button>';
+  }
+}
+
+// ====== RESTART ======
+function restart(){
+  clout=50; sanity=50; drama=0; day=1; gameOver=false;
+  updateMeters();
+  nextEvent();
+}
+
+// ====== START GAME ======
+updateMeters();
+nextEvent();
+</script>
+</body>
+</html>
