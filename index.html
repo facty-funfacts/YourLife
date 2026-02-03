@@ -2,70 +2,63 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fake Social Life: Super Chaos Simulator</title>
+<title>Teen Life Simulator</title>
 <style>
   body {
-    margin:0; font-family: 'Segoe UI', sans-serif;
-    background:#111; color:#fff; overflow:hidden;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    margin:0; font-family:'Segoe UI', sans-serif; background:#f0f2f5; color:#222;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh;
   }
   #game {
-    position:relative; width:600px; height:700px;
-    border:4px solid #0ff; padding:20px; box-sizing:border-box;
-    background:linear-gradient(120deg,#222,#111);
-    overflow:hidden; border-radius:15px;
+    width:500px; padding:20px; border-radius:15px; background:#fff; box-shadow:0 10px 25px rgba(0,0,0,0.2);
   }
-  .meter {
-    height:25px; width:100%; background:#333; margin:5px 0; border-radius:12px; overflow:hidden; font-weight:bold;
+  .stat {
+    margin:8px 0; font-weight:bold;
+  }
+  .bar {
+    height:20px; width:100%; background:#ddd; border-radius:10px; overflow:hidden;
   }
   .fill {
-    height:100%; width:50%; background:#0ff; border-radius:12px; transition:width 0.3s;
-    display:flex; align-items:center; justify-content:center; font-size:14px; color:#111;
+    height:100%; width:50%; background:#4caf50; border-radius:10px; transition:width 0.3s;
+    text-align:center; color:#fff; font-size:12px; line-height:20px;
   }
-  #event { margin:10px 0; font-size:20px; min-height:60px; text-align:center; }
-  .choices { display:flex; flex-wrap:wrap; justify-content:center; }
+  #event { margin:20px 0; min-height:70px; font-size:18px; text-align:center; }
+  .choices { display:flex; flex-direction:column; align-items:center; }
   .choices button {
-    margin:5px; padding:12px 18px; background:#0ff; border:none;
-    border-radius:8px; color:#111; font-weight:bold; cursor:pointer;
-    transition:0.2s;
+    margin:5px; padding:10px 15px; font-size:16px; border:none; border-radius:8px;
+    background:#2196f3; color:#fff; cursor:pointer; transition:0.2s;
   }
-  .choices button:hover { background:#0aa; transform:scale(1.05); }
+  .choices button:hover { background:#1976d2; }
   #message {
-    position:absolute; top:0; left:0; right:0; text-align:center;
-    font-size:26px; padding:15px; display:none; background:#f00; color:#fff; z-index:100;
+    position:absolute; top:20px; left:50%; transform:translateX(-50%);
+    padding:10px 20px; background:#f44336; color:#fff; border-radius:8px; display:none;
   }
-  .notification {
-    position:absolute; padding:8px 12px; background:#ff0; color:#111;
-    border-radius:10px; font-weight:bold; font-size:16px; animation:floatUp 2s forwards;
-  }
-  @keyframes floatUp { 0%{opacity:1; transform:translateY(0);} 100%{opacity:0; transform:translateY(-120px);} }
 </style>
 </head>
 <body>
+<div id="message"></div>
 <div id="game">
-  <div class="meter">💎 Clout: <div id="cloutFill" class="fill">50</div></div>
-  <div class="meter">🧠 Sanity: <div id="sanityFill" class="fill">50</div></div>
-  <div class="meter">🔥 Drama: <div id="dramaFill" class="fill">0</div></div>
-  <div class="meter">😎 Happiness: <div id="happinessFill" class="fill">50</div></div>
-  <div id="event">Welcome to Fake Social Life: Super Chaos!</div>
+  <div class="stat">💎 Clout <div class="bar"><div id="clout" class="fill">50</div></div></div>
+  <div class="stat">🧠 Sanity <div class="bar"><div id="sanity" class="fill">50</div></div></div>
+  <div class="stat">🔥 Drama <div class="bar"><div id="drama" class="fill">0</div></div></div>
+  <div class="stat">😎 Happiness <div class="bar"><div id="happiness" class="fill">50</div></div></div>
+  <div id="event">Welcome to Teen Life Simulator! Survive the chaos of everyday life!</div>
   <div class="choices"></div>
-  <div id="message"></div>
 </div>
 
 <script>
-// ================= GAME STATE =================
+// ========== GAME STATE ==========
 let clout=50, sanity=50, drama=0, happiness=50, day=1;
 let gameOver=false;
 
-// ================= EVENT POOL =================
+// ========== EVENTS ==========
 const events=[
-  {text:"Your crush DMed a meme!", choices:[
+  {text:"Your crush DMed you a funny meme!", choices:[
     {text:"Reply honestly", effect:[10,5,0,5]},
-    {text:"Send meme back", effect:[15,-5,5,10]},
+    {text:"Send a meme back", effect:[15,-5,5,10]},
     {text:"Ignore", effect:[0,-5,10,0]}
   ]},
   {text:"Troll commented on your post", choices:[
-    {text:"Argue back",-effect:[-5,-5,10,-5]},
+    {text:"Argue back", effect:[-5,-5,10,-5]},
     {text:"Block them", effect:[0,0,-5,0]},
     {text:"Make meme about it", effect:[10,-10,5,5]}
   ]},
@@ -74,7 +67,7 @@ const events=[
     {text:"Laugh it off", effect:[5,-5,5,0]},
     {text:"Blame someone else", effect:[-10,-5,15,-5]}
   ]},
-  {text:"Viral meme trend appears!", choices:[
+  {text:"A viral meme trend appears!", choices:[
     {text:"Join trend", effect:[10,0,5,10]},
     {text:"Ignore", effect:[0,0,-5,0]},
     {text:"Make your own meme", effect:[15,-5,10,15]}
@@ -93,40 +86,32 @@ const events=[
     {text:"Hide it", effect:[0,-5,5,0]},
     {text:"Confess", effect:[-5,5,0,5]},
     {text:"Pretend nothing happened", effect:[0,0,0,0]}
-  ]},
+  ]}
 ];
 
-// ================= UTILS =================
-function updateMeters(){
-  document.getElementById("cloutFill").style.width = clout+"%"; document.getElementById("cloutFill").innerText=clout;
-  document.getElementById("sanityFill").style.width = sanity+"%"; document.getElementById("sanityFill").innerText=sanity;
-  document.getElementById("dramaFill").style.width = drama+"%"; document.getElementById("dramaFill").innerText=drama;
-  document.getElementById("happinessFill").style.width = happiness+"%"; document.getElementById("happinessFill").innerText=happiness;
+// ========== UTILS ==========
+function updateBars(){
+  document.getElementById("clout").style.width=clout+"%"; document.getElementById("clout").innerText=clout;
+  document.getElementById("sanity").style.width=sanity+"%"; document.getElementById("sanity").innerText=sanity;
+  document.getElementById("drama").style.width=drama+"%"; document.getElementById("drama").innerText=drama;
+  document.getElementById("happiness").style.width=happiness+"%"; document.getElementById("happiness").innerText=happiness;
 }
 
-function showMessage(text,time=1000){
+function showMessage(text,time=1200){
   const msg=document.getElementById("message");
-  msg.innerText=text;
-  msg.style.display="block";
+  msg.innerText=text; msg.style.display="block";
   setTimeout(()=>{msg.style.display="none";},time);
 }
 
-function showNotification(text){
-  const notif=document.createElement("div");
-  notif.className="notification"; notif.innerText=text;
-  notif.style.left=50+Math.random()*400+"px"; notif.style.top=550+Math.random()*50+"px";
-  document.getElementById("game").appendChild(notif);
-  setTimeout(()=>{notif.remove();},2000);
-}
-
-// ================= GAME LOOP =================
+// ========== GAME LOOP ==========
 function nextEvent(){
   if(gameOver) return;
 
-  const event = events[Math.floor(Math.random()*events.length)];
+  // Random event
+  const event=events[Math.floor(Math.random()*events.length)];
   const eventDiv=document.getElementById("event");
   const choicesDiv=document.querySelector(".choices");
-  eventDiv.innerText=event.text;
+  eventDiv.innerText=`Day ${day}: ${event.text}`;
   choicesDiv.innerHTML="";
 
   event.choices.forEach(choice=>{
@@ -134,54 +119,52 @@ function nextEvent(){
     btn.innerText=choice.text;
     btn.onclick=()=>{
       clout+=choice.effect[0]; sanity+=choice.effect[1]; drama+=choice.effect[2]; happiness+=choice.effect[3];
-      clout=Math.min(Math.max(clout,0),100);
-      sanity=Math.min(Math.max(sanity,0),100);
-      drama=Math.min(Math.max(drama,0),100);
-      happiness=Math.min(Math.max(happiness,0),100);
-
-      updateMeters();
-      showNotification("Event: "+event.text);
+      clout=Math.min(Math.max(clout,0),100); sanity=Math.min(Math.max(sanity,0),100);
+      drama=Math.min(Math.max(drama,0),100); happiness=Math.min(Math.max(happiness,0),100);
+      updateBars();
+      showMessage("Choice made!");
       checkGameOver();
 
-      // Chaos visuals
-      const g=document.getElementById("game");
-      g.style.background=`linear-gradient(${120+drama}deg,#${Math.floor(Math.random()*16777215).toString(16)},#${Math.floor(Math.random()*16777215).toString(16)})`;
-
+      // Optional mini-challenge
       if(Math.random()<0.25 && !gameOver) miniChallenge();
-      if(!gameOver) setTimeout(nextEvent,800);
+      if(!gameOver){
+        day++;
+        setTimeout(nextEvent,700);
+      }
     };
     choicesDiv.appendChild(btn);
   });
 }
 
-// ================= MINI-CHALLENGE =================
+// ========== MINI-CHALLENGE ==========
 function miniChallenge(){
-  showMessage("QUICK! TAP FAST!",1500);
-  let clicks=0; const target=5+Math.floor(Math.random()*5);
-  function clickHandler(){ clicks++; if(clicks>=target){showMessage("SUCCESS!",1000); clout+=10; sanity+=5; document.removeEventListener("click",clickHandler); updateMeters();}}
+  showMessage("Quick! Tap fast 5 times!",1500);
+  let clicks=0; const target=5;
+  function clickHandler(){ clicks++; if(clicks>=target){showMessage("Success!",1000); clout+=5; happiness+=5; document.removeEventListener("click",clickHandler); updateBars();}}
   document.addEventListener("click",clickHandler);
-  setTimeout(()=>{ document.removeEventListener("click",clickHandler); if(clicks<target){showMessage("FAIL!",1000); sanity-=10; drama+=5; updateMeters(); checkGameOver();} },1500);
+  setTimeout(()=>{
+    document.removeEventListener("click",clickHandler);
+    if(clicks<target){showMessage("Fail!",1000); sanity-=5; drama+=5; updateBars(); checkGameOver();}
+  },1500);
 }
 
-// ================= GAME OVER =================
+// ========== GAME OVER ==========
 function checkGameOver(){
   if(clout<=0 || sanity<=0 || drama>=100){
     gameOver=true;
-    document.getElementById("event").innerText="💀 GAME OVER 💀\nDay survived: "+day;
+    document.getElementById("event").innerText=`💀 GAME OVER 💀\nYou survived ${day} days.`;
     document.querySelector(".choices").innerHTML='<button onclick="restart()">Restart</button>';
   }
 }
 
-// ================= RESTART =================
+// ========== RESTART ==========
 function restart(){
   clout=50; sanity=50; drama=0; happiness=50; day=1; gameOver=false;
-  updateMeters();
-  nextEvent();
+  updateBars(); nextEvent();
 }
 
-// ================= START GAME =================
-updateMeters();
-nextEvent();
+// ========== START ==========
+updateBars(); nextEvent();
 </script>
 </body>
 </html>
