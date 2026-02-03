@@ -2,157 +2,168 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fake Social Life Simulator</title>
+<title>Fake Social Life: Super Chaos Simulator</title>
 <style>
-  body { margin:0; font-family: 'Segoe UI', sans-serif; background:#111; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; overflow:hidden; }
-  #game { position:relative; width:500px; height:600px; border:3px solid #0ff; padding:20px; box-sizing:border-box; background:#222; overflow:hidden; }
-  .meter { height:20px; width:100%; background:#333; margin:5px 0; border-radius:10px; overflow:hidden; }
-  .fill { height:100%; width:50%; background:#0ff; border-radius:10px; transition:width 0.3s; }
-  #event { margin:10px 0; font-size:18px; min-height:60px; }
-  .choices button { margin:5px; padding:10px 15px; background:#0ff; border:none; border-radius:5px; color:#111; font-weight:bold; cursor:pointer; }
-  .choices button:hover { background:#0aa; }
-  #message { position:absolute; top:0; left:0; right:0; text-align:center; font-size:24px; padding:10px; display:none; background:#f00; color:#fff; }
+  body {
+    margin:0; font-family: 'Segoe UI', sans-serif;
+    background:#111; color:#fff; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #game {
+    position:relative; width:600px; height:700px;
+    border:4px solid #0ff; padding:20px; box-sizing:border-box;
+    background:linear-gradient(120deg,#222,#111);
+    overflow:hidden; border-radius:15px;
+  }
+  .meter {
+    height:25px; width:100%; background:#333; margin:5px 0; border-radius:12px; overflow:hidden; font-weight:bold;
+  }
+  .fill {
+    height:100%; width:50%; background:#0ff; border-radius:12px; transition:width 0.3s;
+    display:flex; align-items:center; justify-content:center; font-size:14px; color:#111;
+  }
+  #event { margin:10px 0; font-size:20px; min-height:60px; text-align:center; }
+  .choices { display:flex; flex-wrap:wrap; justify-content:center; }
+  .choices button {
+    margin:5px; padding:12px 18px; background:#0ff; border:none;
+    border-radius:8px; color:#111; font-weight:bold; cursor:pointer;
+    transition:0.2s;
+  }
+  .choices button:hover { background:#0aa; transform:scale(1.05); }
+  #message {
+    position:absolute; top:0; left:0; right:0; text-align:center;
+    font-size:26px; padding:15px; display:none; background:#f00; color:#fff; z-index:100;
+  }
+  .notification {
+    position:absolute; padding:8px 12px; background:#ff0; color:#111;
+    border-radius:10px; font-weight:bold; font-size:16px; animation:floatUp 2s forwards;
+  }
+  @keyframes floatUp { 0%{opacity:1; transform:translateY(0);} 100%{opacity:0; transform:translateY(-120px);} }
 </style>
 </head>
 <body>
 <div id="game">
-  <div class="meter">Clout: <div id="cloutFill" class="fill"></div></div>
-  <div class="meter">Sanity: <div id="sanityFill" class="fill"></div></div>
-  <div class="meter">Drama: <div id="dramaFill" class="fill"></div></div>
-  <div id="event">Welcome to Fake Social Life! Survive the chaos!</div>
+  <div class="meter">💎 Clout: <div id="cloutFill" class="fill">50</div></div>
+  <div class="meter">🧠 Sanity: <div id="sanityFill" class="fill">50</div></div>
+  <div class="meter">🔥 Drama: <div id="dramaFill" class="fill">0</div></div>
+  <div class="meter">😎 Happiness: <div id="happinessFill" class="fill">50</div></div>
+  <div id="event">Welcome to Fake Social Life: Super Chaos!</div>
   <div class="choices"></div>
   <div id="message"></div>
 </div>
 
 <script>
-// ====== GAME STATE ======
-let clout = 50, sanity = 50, drama = 0;
-let day = 1;
-let gameOver = false;
+// ================= GAME STATE =================
+let clout=50, sanity=50, drama=0, happiness=50, day=1;
+let gameOver=false;
 
-// ====== EVENT POOL ======
-const events = [
-  { text: "Your crush DMed you a meme", choices:[
-      {text:"Reply honestly", effect:[+10,+5,0]},
-      {text:"Send a meme back", effect:[+15,-5,+5]},
-      {text:"Ignore", effect:[0,-5,+10]}
+// ================= EVENT POOL =================
+const events=[
+  {text:"Your crush DMed a meme!", choices:[
+    {text:"Reply honestly", effect:[10,5,0,5]},
+    {text:"Send meme back", effect:[15,-5,5,10]},
+    {text:"Ignore", effect:[0,-5,10,0]}
   ]},
-  { text: "A troll commented on your post", choices:[
-      {text:"Argue back", effect:[-5,-5,+10]},
-      {text:"Block them", effect:[0,0,-5]},
-      {text:"Make a meme about it", effect:[+10,-10,+5]}
+  {text:"Troll commented on your post", choices:[
+    {text:"Argue back",-effect:[-5,-5,10,-5]},
+    {text:"Block them", effect:[0,0,-5,0]},
+    {text:"Make meme about it", effect:[10,-10,5,5]}
   ]},
-  { text: "Teacher sees your prank", choices:[
-      {text:"Apologize", effect:[-5,+5,0]},
-      {text:"Laugh it off", effect:[+5,-5,+5]},
-      {text:"Blame someone else", effect:[-10,-5,+15]}
+  {text:"Teacher sees your prank", choices:[
+    {text:"Apologize", effect:[-5,5,0,5]},
+    {text:"Laugh it off", effect:[5,-5,5,0]},
+    {text:"Blame someone else", effect:[-10,-5,15,-5]}
   ]},
-  { text: "Viral meme trend appears", choices:[
-      {text:"Join trend", effect:[+10,0,+5]},
-      {text:"Ignore", effect:[0,0,-5]},
-      {text:"Make your own meme", effect:[+15,-5,+10]}
+  {text:"Viral meme trend appears!", choices:[
+    {text:"Join trend", effect:[10,0,5,10]},
+    {text:"Ignore", effect:[0,0,-5,0]},
+    {text:"Make your own meme", effect:[15,-5,10,15]}
   ]},
-  { text: "Your embarrassing story leaked", choices:[
-      {text:"Panic", effect:[-5,-15,+10]},
-      {text:"Make a joke", effect:[+5,-5,+5]},
-      {text:"Pretend nothing happened", effect:[0,-5,+5]}
+  {text:"Embarrassing story leaked!", choices:[
+    {text:"Panic", effect:[-5,-15,10,-10]},
+    {text:"Make joke", effect:[5,-5,5,5]},
+    {text:"Pretend nothing happened", effect:[0,-5,5,0]}
   ]},
-  { text: "Friend challenges you to a crazy dare", choices:[
-      {text:"Do it", effect:[+10,-10,+15]},
-      {text:"Refuse politely", effect:[0,+5,-5]},
-      {text:"Prank them instead", effect:[+5,-5,+10]}
+  {text:"Friend challenges you to a crazy dare", choices:[
+    {text:"Do it", effect:[10,-10,15,10]},
+    {text:"Refuse politely", effect:[0,5,-5,0]},
+    {text:"Prank them instead", effect:[5,-5,10,5]}
   ]},
-  { text: "Parents check your phone", choices:[
-      {text:"Hide it", effect:[0,-5,+5]},
-      {text:"Confess", effect:[-5,+5,0]},
-      {text:"Pretend nothing happened", effect:[0,0,0]}
-  ]}
+  {text:"Parents check your phone", choices:[
+    {text:"Hide it", effect:[0,-5,5,0]},
+    {text:"Confess", effect:[-5,5,0,5]},
+    {text:"Pretend nothing happened", effect:[0,0,0,0]}
+  ]},
 ];
 
-// ====== UTILS ======
+// ================= UTILS =================
 function updateMeters(){
-  document.getElementById("cloutFill").style.width = clout + "%";
-  document.getElementById("sanityFill").style.width = sanity + "%";
-  document.getElementById("dramaFill").style.width = drama + "%";
+  document.getElementById("cloutFill").style.width = clout+"%"; document.getElementById("cloutFill").innerText=clout;
+  document.getElementById("sanityFill").style.width = sanity+"%"; document.getElementById("sanityFill").innerText=sanity;
+  document.getElementById("dramaFill").style.width = drama+"%"; document.getElementById("dramaFill").innerText=drama;
+  document.getElementById("happinessFill").style.width = happiness+"%"; document.getElementById("happinessFill").innerText=happiness;
 }
 
-function showMessage(text, time=1000){
-  const msg = document.getElementById("message");
-  msg.innerText = text;
-  msg.style.display = "block";
-  setTimeout(()=>{msg.style.display="none";}, time);
+function showMessage(text,time=1000){
+  const msg=document.getElementById("message");
+  msg.innerText=text;
+  msg.style.display="block";
+  setTimeout(()=>{msg.style.display="none";},time);
 }
 
-// ====== GAME LOOP ======
+function showNotification(text){
+  const notif=document.createElement("div");
+  notif.className="notification"; notif.innerText=text;
+  notif.style.left=50+Math.random()*400+"px"; notif.style.top=550+Math.random()*50+"px";
+  document.getElementById("game").appendChild(notif);
+  setTimeout(()=>{notif.remove();},2000);
+}
+
+// ================= GAME LOOP =================
 function nextEvent(){
   if(gameOver) return;
 
-  // Random event
   const event = events[Math.floor(Math.random()*events.length)];
-  const eventDiv = document.getElementById("event");
-  const choicesDiv = document.querySelector(".choices");
-  eventDiv.innerText = event.text;
-  choicesDiv.innerHTML = "";
+  const eventDiv=document.getElementById("event");
+  const choicesDiv=document.querySelector(".choices");
+  eventDiv.innerText=event.text;
+  choicesDiv.innerHTML="";
 
-  // Create choice buttons
-  event.choices.forEach(choice => {
-    const btn = document.createElement("button");
-    btn.innerText = choice.text;
-    btn.onclick = ()=>{
-      // Apply effects
-      clout += choice.effect[0];
-      sanity += choice.effect[1];
-      drama += choice.effect[2];
-
-      // Clamp stats
-      clout = Math.min(Math.max(clout,0),100);
-      sanity = Math.min(Math.max(sanity,0),100);
-      drama = Math.min(Math.max(drama,0),100);
+  event.choices.forEach(choice=>{
+    const btn=document.createElement("button");
+    btn.innerText=choice.text;
+    btn.onclick=()=>{
+      clout+=choice.effect[0]; sanity+=choice.effect[1]; drama+=choice.effect[2]; happiness+=choice.effect[3];
+      clout=Math.min(Math.max(clout,0),100);
+      sanity=Math.min(Math.max(sanity,0),100);
+      drama=Math.min(Math.max(drama,0),100);
+      happiness=Math.min(Math.max(happiness,0),100);
 
       updateMeters();
+      showNotification("Event: "+event.text);
       checkGameOver();
 
-      // Add some chaos visual if drama high
-      if(drama>70) document.getElementById("game").style.background="#440044";
-      else document.getElementById("game").style.background="#222";
+      // Chaos visuals
+      const g=document.getElementById("game");
+      g.style.background=`linear-gradient(${120+drama}deg,#${Math.floor(Math.random()*16777215).toString(16)},#${Math.floor(Math.random()*16777215).toString(16)})`;
 
-      // Random mini-challenge (20% chance)
-      if(Math.random()<0.2 && !gameOver) miniChallenge();
-
-      // Next event
-      if(!gameOver) setTimeout(nextEvent, 800);
+      if(Math.random()<0.25 && !gameOver) miniChallenge();
+      if(!gameOver) setTimeout(nextEvent,800);
     };
     choicesDiv.appendChild(btn);
   });
 }
 
-// ====== MINI CHALLENGE ======
+// ================= MINI-CHALLENGE =================
 function miniChallenge(){
-  showMessage("Quick! Click fast!", 1500);
-  let clicks = 0;
-  const target = 5 + Math.floor(Math.random()*5);
-  function clickHandler(){
-    clicks++;
-    if(clicks>=target){
-      showMessage("Success!", 1000);
-      clout+=10; sanity+=5;
-      document.removeEventListener("click", clickHandler);
-      updateMeters();
-    }
-  }
-  document.addEventListener("click", clickHandler);
-  setTimeout(()=>{
-    document.removeEventListener("click", clickHandler);
-    if(clicks<target){
-      showMessage("Fail!", 1000);
-      sanity-=10; drama+=5;
-      updateMeters();
-      checkGameOver();
-    }
-  },1500);
+  showMessage("QUICK! TAP FAST!",1500);
+  let clicks=0; const target=5+Math.floor(Math.random()*5);
+  function clickHandler(){ clicks++; if(clicks>=target){showMessage("SUCCESS!",1000); clout+=10; sanity+=5; document.removeEventListener("click",clickHandler); updateMeters();}}
+  document.addEventListener("click",clickHandler);
+  setTimeout(()=>{ document.removeEventListener("click",clickHandler); if(clicks<target){showMessage("FAIL!",1000); sanity-=10; drama+=5; updateMeters(); checkGameOver();} },1500);
 }
 
-// ====== GAME OVER ======
+// ================= GAME OVER =================
 function checkGameOver(){
   if(clout<=0 || sanity<=0 || drama>=100){
     gameOver=true;
@@ -161,14 +172,14 @@ function checkGameOver(){
   }
 }
 
-// ====== RESTART ======
+// ================= RESTART =================
 function restart(){
-  clout=50; sanity=50; drama=0; day=1; gameOver=false;
+  clout=50; sanity=50; drama=0; happiness=50; day=1; gameOver=false;
   updateMeters();
   nextEvent();
 }
 
-// ====== START GAME ======
+// ================= START GAME =================
 updateMeters();
 nextEvent();
 </script>
